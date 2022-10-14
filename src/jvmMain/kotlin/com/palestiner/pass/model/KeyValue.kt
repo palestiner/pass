@@ -6,6 +6,7 @@ import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.writeLines
 
 data class KeyValue(
     val name: String,
@@ -31,10 +32,11 @@ data class KeyValue(
         }
 
         fun savePair(keyValue: KeyValue) {
-            File(passDataFile).appendText(
-                "$keyValue\n",
-                Charsets.UTF_8
-            )
+            File(passDataFile).appendText("$keyValue\n", Charsets.UTF_8)
+        }
+
+        fun saveState(pairs: MutableList<KeyValue>) {
+            Path.of(passDataFile).writeLines(pairs.map { it.toString() })
         }
     }
 

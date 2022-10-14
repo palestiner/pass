@@ -1,7 +1,6 @@
 package com.palestiner.pass.component
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -15,7 +14,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusOrder
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.text.TextStyle
@@ -40,7 +41,6 @@ import java.awt.Toolkit
 @OptIn(
     ExperimentalUnitApi::class,
     ExperimentalComposeUiApi::class,
-    ExperimentalFoundationApi::class
 )
 fun App(
     windowState: WindowState,
@@ -51,7 +51,7 @@ fun App(
     val pairs = refresh()
     val mainInputFocusRequester = remember { FocusRequester() }
     var showCreateButton by remember { mutableStateOf(pairs.isEmpty()) }
-    val state = rememberLazyListState()
+    val lazyListState = rememberLazyListState()
 
     MaterialTheme(darkColors(primary = Color(fontColor))) {
         Column(
@@ -61,7 +61,7 @@ fun App(
                     showCreateButton = pairs.none { it.name.contains(text) }
                     mainInputFocusRequester.requestFocus()
                     coroutineScope.launch {
-                        state.scrollToItem(0)
+                        lazyListState.scrollToItem(0)
                     }
                 }
                 false
@@ -82,34 +82,58 @@ fun App(
                     .focusRequester(mainInputFocusRequester)
                     .fillMaxWidth()
                     .height(60.dp)
+                    .onFocusEvent { focusState ->
+                        if (focusState.isFocused) {
+                            coroutineScope.launch {
+                                lazyListState.scrollToItem(0)
+                            }
+                        }
+                    }
             )
 
             Box {
                 val filteredPairs = mutableStateListOf<KeyValue>().apply {
                     addAll(pairs.filter { it.name.contains(text) }.toMutableList())
                 }
-                val itemsFocusRequesters = remember { filteredPairs.map {  } }
-                LazyColumn(state = state) {
+                LazyColumn(state = lazyListState) {
                     if (text.isEmpty()) {
                         coroutineScope.launch {
-                            state.scrollToItem(0)
+                            lazyListState.scrollToItem(0)
                         }
                     }
                     items(
                         items = filteredPairs,
                         key = { it.name }
                     ) {
+                        val index = filteredPairs.indexOf(it)
                         TextButton(
                             onClick = {
                                 copyClipboard(it.value)
                                 showOrNo(windowState, mainWindowVisible)
                             },
                             modifier = Modifier.fillMaxWidth()
+                                .focusOrder {
+                                    if (index == filteredPairs.size - 1) {
+                                        next = mainInputFocusRequester
+                                    }
+                                }
+                                .onFocusEvent { focusState ->
+                                    if (focusState.isFocused) {
+                                        coroutineScope.launch {
+                                            lazyListState.animateScrollToItem(index)
+                                        }
+                                    }
+                                }
                                 .padding(start = 10.dp, end = 10.dp)
                                 .onKeyEvent { keyEvent ->
                                     if (keyEvent.type == KeyEventType.KeyUp && keyEvent.key == Key.Delete) {
                                         pairs.remove(it)
                                         filteredPairs.remove(it)
+                                        coroutineScope.launch {
+                                            KeyValue.saveState(pairs)
+                                            mainInputFocusRequester.requestFocus()
+                                        }
+                                        return@onKeyEvent true
                                     }
                                     false
                                 }
@@ -124,7 +148,7 @@ fun App(
                 }
                 VerticalScrollbar(
                     modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
-                    adapter = rememberScrollbarAdapter(scrollState = state)
+                    adapter = rememberScrollbarAdapter(scrollState = lazyListState)
                 )
 
                 if (showCreateButton) {
@@ -144,7 +168,7 @@ fun App(
     }
 }
 
-fun copyClipboard(text: String) {
+private fun copyClipboard(text: String) {
     Toolkit.getDefaultToolkit().systemClipboard.setContents(StringTransferable(text), null)
 }
 
