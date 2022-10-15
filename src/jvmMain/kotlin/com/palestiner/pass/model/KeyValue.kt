@@ -2,7 +2,6 @@ package com.palestiner.pass.model
 
 import java.io.File
 import java.io.FileInputStream
-import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
@@ -22,10 +21,10 @@ data class KeyValue(
                 Files.createDirectory(Path.of(passDataDir))
                 Files.createFile(Path.of(passDataFile))
             }
-            val inputStream: InputStream = FileInputStream(File(passDataFile))
             val props = Properties()
-            props.load(inputStream)
-            inputStream.close()
+            FileInputStream(File(passDataFile)).use {
+                props.load(it)
+            }
             return props.entries.map { KeyValue(it.key as String, it.value as String) }
                 .sortedBy { it.name }
                 .toMutableList()
