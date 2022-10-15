@@ -129,9 +129,10 @@ fun App(
                                     if (keyEvent.type == KeyEventType.KeyUp && keyEvent.key == Key.Delete) {
                                         pairs.remove(it)
                                         filteredPairs.remove(it)
+                                        showCreateButton = filteredPairs.isEmpty()
+                                        mainInputFocusRequester.requestFocus()
                                         coroutineScope.launch {
                                             KeyValue.saveState(pairs)
-                                            mainInputFocusRequester.requestFocus()
                                         }
                                         return@onKeyEvent true
                                     }
