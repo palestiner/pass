@@ -58,7 +58,7 @@ fun App(
             modifier = columnModifier.onKeyEvent { keyEvent ->
                 if (keyEvent.type == KeyEventType.KeyUp && keyEvent.key == Key.Escape) {
                     text = ""
-                    showCreateButton = pairs.none { it.name.contains(text) }
+                    showCreateButton = pairs.none { it.key.contains(text) }
                     mainInputFocusRequester.requestFocus()
                     coroutineScope.launch {
                         lazyListState.scrollToItem(0)
@@ -76,7 +76,7 @@ fun App(
                 ),
                 onValueChange = { inputText ->
                     text = inputText
-                    showCreateButton = pairs.none { it.name.contains(inputText) }
+                    showCreateButton = pairs.none { it.key.contains(inputText) }
                 },
                 modifier = Modifier.background(Color(mainColor))
                     .focusRequester(mainInputFocusRequester)
@@ -93,7 +93,7 @@ fun App(
 
             Box {
                 val filteredPairs = mutableStateListOf<KeyValue>().apply {
-                    addAll(pairs.filter { it.name.contains(text) }.toMutableList())
+                    addAll(pairs.filter { it.key.contains(text) }.toMutableList())
                 }
                 LazyColumn(state = lazyListState) {
                     if (text.isEmpty()) {
@@ -103,7 +103,7 @@ fun App(
                     }
                     items(
                         items = filteredPairs,
-                        key = { it.name }
+                        key = { it.key }
                     ) {
                         val index = filteredPairs.indexOf(it)
                         TextButton(
@@ -140,7 +140,7 @@ fun App(
                                 }
                         ) {
                             Text(
-                                text = it.name,
+                                text = it.key,
                                 fontSize = TextUnit(18F, TextUnitType.Sp)
                             )
                         }

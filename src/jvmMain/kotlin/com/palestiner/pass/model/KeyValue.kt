@@ -1,5 +1,6 @@
 package com.palestiner.pass.model
 
+import com.palestiner.pass.service.Encryptor
 import java.io.File
 import java.io.FileInputStream
 import java.nio.file.Files
@@ -8,13 +9,16 @@ import java.util.*
 import kotlin.io.path.writeLines
 
 data class KeyValue(
-    val name: String,
+    val key: String,
     val value: String
 ) {
+
     companion object {
 
-        private const val passDataDir = "./pass"
-        private const val passDataFile = "$passDataDir/data"
+        private val passDataDir = "${System.getenv("HOME")}/pass"
+        private val passDataFile = "$passDataDir/data"
+        private val secretKey = System.getenv("PASS_SK")
+        private val encryptor = Encryptor()
 
         fun loadPairs(): MutableList<KeyValue> {
             if (!Files.exists(Path.of(passDataDir))) {
@@ -25,13 +29,20 @@ data class KeyValue(
             FileInputStream(File(passDataFile)).use {
                 props.load(it)
             }
-            return props.entries.map { KeyValue(it.key as String, it.value as String) }
-                .sortedBy { it.name }
+            return props.entries.map {
+                val value = if (secretKey != null) encryptor.decrypt(secretKey, it.value as String)
+                else it.value as String
+                KeyValue(it.key as String, value)
+            }
+                .sortedBy { it.key }
                 .toMutableList()
         }
 
         fun savePair(keyValue: KeyValue) {
-            File(passDataFile).appendText("$keyValue\n", Charsets.UTF_8)
+            val value = if (secretKey != null) encryptor.encrypt(secretKey, keyValue.value)
+            else keyValue.value
+            val result = KeyValue(keyValue.key, value)
+            File(passDataFile).appendText("$result\n", Charsets.UTF_8)
         }
 
         fun saveState(pairs: MutableList<KeyValue>) {
@@ -40,12 +51,12 @@ data class KeyValue(
     }
 
     override fun toString(): String {
-        return "$name=$value"
+        return "$key=$value"
     }
 
 
     override fun hashCode(): Int {
-        var result = name.hashCode()
+        var result = key.hashCode()
         result = 31 * result + value.hashCode()
         return result
     }
@@ -54,7 +65,7 @@ data class KeyValue(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
         other as KeyValue
-        if (name != other.name) return false
+        if (key != other.key) return false
         if (value != other.value) return false
         return true
     }

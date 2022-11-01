@@ -48,7 +48,7 @@ compose.desktop {
             packageVersion = "1.0.0"
             description = "Passwords provider app"
             copyright = "© 2022 Palestiner. All rights reserved."
-            vendor = "Palestiner"
+            vendor = "palestiner"
             appResourcesRootDir.set(project.layout.projectDirectory.dir("resources"))
         }
     }
