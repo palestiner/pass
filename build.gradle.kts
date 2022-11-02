@@ -1,4 +1,4 @@
-import org.jetbrains.compose.compose
+
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -45,7 +45,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(/*TargetFormat.Dmg,*/ TargetFormat.Msi/*, TargetFormat.Deb*/)
             packageName = "pass"
-            packageVersion = "1.0.0"
+            packageVersion = "1.1.0"
             description = "Passwords provider app"
             copyright = "© 2022 Palestiner. All rights reserved."
             vendor = "palestiner"
