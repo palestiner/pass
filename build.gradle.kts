@@ -33,6 +33,7 @@ kotlin {
                 implementation(compose.desktop.currentOs)
                 implementation("com.github.tulskiy:jkeymaster:1.3")
                 implementation("org.slf4j:slf4j-jdk14:2.0.3")
+                implementation("org.slf4j:slf4j-api:2.0.13")
             }
         }
         val jvmTest by getting

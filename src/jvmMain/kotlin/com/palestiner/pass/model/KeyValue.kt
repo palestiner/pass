@@ -15,7 +15,7 @@ data class KeyValue(
 
     companion object {
 
-        private val passDataDir = "${System.getenv("HOME")}/pass"
+        private val passDataDir = "${System.getenv("HOMEDRIVE")}${System.getenv("HOMEPATH")}/pass"
         private val passDataFile = "$passDataDir/data"
         private val secretKey = System.getenv("PASS_SK")
         private val encryptor = Encryptor()
