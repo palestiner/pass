@@ -23,11 +23,14 @@ dependencies {
 compose.desktop {
     application {
         mainClass = "com.palestiner.pass.MainKt"
-
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "com.palestiner.pass"
-            packageVersion = "1.0.0"
+            packageName = "pass"
+            packageVersion = "1.1.0"
+            description = "Passwords provider app"
+            copyright = "© 2026 Palestiner. All rights reserved."
+            vendor = "palestiner"
+            appResourcesRootDir.set(project.layout.projectDirectory.dir("resources"))
         }
     }
 }
