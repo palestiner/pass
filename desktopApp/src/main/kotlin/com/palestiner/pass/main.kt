@@ -1,5 +1,8 @@
 package com.palestiner.pass
 
+import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.application
+
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
@@ -7,7 +10,7 @@ import androidx.compose.ui.window.*
 import com.palestiner.pass.component.App
 import com.palestiner.pass.icon.app.AppIcon
 import com.tulskiy.keymaster.common.Provider
-import com.tulskiy.keymaster.windows.WindowsProvider
+import com.tulskiy.keymaster.osx.CarbonProvider
 import javax.swing.KeyStroke
 
 fun main() = application {
@@ -42,7 +45,7 @@ fun main() = application {
             focusable = true,
             title = "pass"
         ) {
-            val provider: WindowsProvider = Provider.getCurrentProvider(false) as WindowsProvider
+            val provider: CarbonProvider = Provider.getCurrentProvider(false) as CarbonProvider
             provider.register(KeyStroke.getKeyStroke("alt MINUS")) {
                 showOrNo(state, visible)
             }

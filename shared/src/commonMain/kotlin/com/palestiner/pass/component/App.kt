@@ -1,6 +1,5 @@
 package com.palestiner.pass.component
 
-import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -8,10 +7,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollbarAdapter
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusOrder
@@ -20,7 +18,6 @@ import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.unit.ExperimentalUnitApi
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
@@ -36,12 +33,7 @@ import kotlinx.coroutines.launch
 import java.awt.Toolkit
 
 
-@Preview
 @Composable
-@OptIn(
-    ExperimentalUnitApi::class,
-    ExperimentalComposeUiApi::class,
-)
 fun App(
     windowState: WindowState,
     mainWindowVisible: MutableState<Boolean>
@@ -53,7 +45,8 @@ fun App(
     var showCreateButton by remember { mutableStateOf(pairs.isEmpty()) }
     val lazyListState = rememberLazyListState()
 
-    MaterialTheme(darkColors(primary = Color(fontColor))) {
+
+    MaterialTheme(darkColorScheme(primary = Color(fontColor))) {
         Column(
             modifier = columnModifier.onKeyEvent { keyEvent ->
                 if (keyEvent.type == KeyEventType.KeyUp && keyEvent.key == Key.Escape) {
@@ -144,7 +137,7 @@ fun App(
                                 fontSize = TextUnit(18F, TextUnitType.Sp)
                             )
                         }
-                        Divider()
+                        HorizontalDivider(Modifier, DividerDefaults.Thickness, DividerDefaults.color)
                     }
                 }
                 VerticalScrollbar(
