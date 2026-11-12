@@ -39,14 +39,20 @@ data class KeyValue(
         }
 
         fun savePair(keyValue: KeyValue) {
-            val value = if (secretKey != null) encryptor.encrypt(secretKey, keyValue.value)
-            else keyValue.value
+            val value = encrypt(keyValue)
             val result = KeyValue(keyValue.key, value)
             File(passDataFile).appendText("$result\n", Charsets.UTF_8)
         }
 
+        private fun encrypt(keyValue: KeyValue): String =
+            if (secretKey != null) encryptor.encrypt(secretKey, keyValue.value)
+            else keyValue.value
+
         fun saveState(pairs: MutableList<KeyValue>) {
-            Path.of(passDataFile).writeLines(pairs.map { it.toString() })
+            Path.of(passDataFile).writeLines(pairs.map {
+                val encryptedVal = encrypt(it)
+                "${it.key}=$encryptedVal"
+            })
         }
     }
 

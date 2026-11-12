@@ -1,20 +1,51 @@
 package com.palestiner.pass
 
-import androidx.compose.ui.window.Window
-import androidx.compose.ui.window.application
-
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
+import ca.weblite.objc.Client
+import com.github.kwhat.jnativehook.GlobalScreen
+import com.github.kwhat.jnativehook.NativeHookException
+import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent
+import com.github.kwhat.jnativehook.keyboard.NativeKeyListener
 import com.palestiner.pass.component.App
 import com.palestiner.pass.icon.app.AppIcon
-import com.tulskiy.keymaster.common.Provider
-import com.tulskiy.keymaster.osx.CarbonProvider
-import javax.swing.KeyStroke
+import java.util.logging.Level
+import java.util.logging.Logger
+import javax.swing.SwingUtilities
+
+private val isMac = System.getProperty("os.name").lowercase().contains("mac")
+
+private fun setActivationPolicy(policy: Long) {
+    if (!isMac) return
+    try {
+        val nsApp = Client.getInstance().sendProxy("NSApplication", "sharedApplication")
+        nsApp.send("setActivationPolicy:", policy)
+        if (policy == 0L) {
+            // явно активируем приложение, иначе фокус останется у предыдущей программы
+            nsApp.send("activateIgnoringOtherApps:", true)
+        }
+    } catch (e: Throwable) {
+        e.printStackTrace()
+    }
+}
+
+fun hideApp(window: ComposeWindow?) {
+    setActivationPolicy(2L) // Prohibited: убрать из Dock и Cmd+Tab
+    window?.isVisible = false
+}
+
+fun showApp(window: ComposeWindow?) {
+    setActivationPolicy(0L) // Regular: вернуть иконку в Dock
+    window?.isVisible = true
+    window?.toFront()
+}
 
 fun main() = application {
     val visible = remember { mutableStateOf(true) }
+    var appWindow by remember { mutableStateOf<ComposeWindow?>(null) }
     val state = rememberWindowState(
         width = 200.dp,
         height = 300.dp,
@@ -29,13 +60,56 @@ fun main() = application {
             state = trayState,
             icon = AppIcon,
             menu = { Item("Exit", onClick = { isOpen = false }) },
-            onAction = { showOrNo(state, visible) }
+            onAction = { showOrNo(visible, appWindow) }
         )
+
+        DisposableEffect(Unit) {
+            Logger.getLogger(GlobalScreen::class.java.`package`.name).apply {
+                level = Level.WARNING
+                useParentHandlers = false
+            }
+
+            try {
+                GlobalScreen.registerNativeHook()
+            } catch (e: NativeHookException) {
+                e.printStackTrace()
+            }
+
+            val listener = object : NativeKeyListener {
+                override fun nativeKeyPressed(e: NativeKeyEvent) {
+                    when (e.keyCode) {
+                        NativeKeyEvent.VC_MINUS ->
+                            if (e.modifiers and NativeKeyEvent.ALT_MASK != 0) {
+                                showOrNo(visible, appWindow)
+                            }
+                        NativeKeyEvent.VC_EQUALS ->
+                            if (e.modifiers and NativeKeyEvent.ALT_MASK != 0) {
+                                onTop = !onTop
+                                showApp(appWindow)
+                            }
+                        NativeKeyEvent.VC_X ->
+                            if (e.modifiers and NativeKeyEvent.CTRL_MASK != 0 &&
+                                e.modifiers and NativeKeyEvent.ALT_MASK != 0
+                            ) {
+                                isOpen = false
+                            }
+                    }
+                }
+            }
+            GlobalScreen.addNativeKeyListener(listener)
+
+            onDispose {
+                GlobalScreen.removeNativeKeyListener(listener)
+                try {
+                    GlobalScreen.unregisterNativeHook()
+                } catch (e: NativeHookException) {
+                    e.printStackTrace()
+                }
+            }
+        }
+
         Window(
-            onCloseRequest = {
-                visible.value = !visible.value
-                state.isMinimized = !state.isMinimized
-            },
+            onCloseRequest = { showOrNo(visible, appWindow) },
             alwaysOnTop = onTop,
             icon = AppIcon,
             resizable = false,
@@ -45,22 +119,20 @@ fun main() = application {
             focusable = true,
             title = "pass"
         ) {
-            val provider: CarbonProvider = Provider.getCurrentProvider(false) as CarbonProvider
-            provider.register(KeyStroke.getKeyStroke("alt MINUS")) {
-                showOrNo(state, visible)
-            }
-            provider.register(KeyStroke.getKeyStroke("alt PLUS")) {
-                onTop = !onTop
-                onTop = !onTop
-            }
-            provider.register(KeyStroke.getKeyStroke("ctrl alt X")) { isOpen = false }
-            App(state, visible)
+            appWindow = this.window
+            App(visible) { showOrNo(visible, appWindow) }
         }
     }
 }
 
-fun showOrNo(state: WindowState, visible: MutableState<Boolean>) {
-    visible.value = !visible.value
-    state.isMinimized = !state.isMinimized
-    state.isMinimized = !state.isMinimized
+fun showOrNo(visible: MutableState<Boolean>, window: ComposeWindow?) {
+    SwingUtilities.invokeLater {
+        if (visible.value) {
+            hideApp(window)
+            visible.value = false
+        } else {
+            showApp(window)
+            visible.value = true
+        }
+    }
 }

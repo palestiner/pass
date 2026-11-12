@@ -14,8 +14,10 @@ dependencies {
 
     implementation(libs.compose.uiToolingPreview)
 
-    implementation("com.github.tulskiy:jkeymaster:1.3")
     implementation(libs.jnativehook)
+
+    // macOS: смена activation policy ( Dock / Cmd+Tab )
+    implementation("ca.weblite:java-objc-bridge:1.1")
 }
 
 compose.desktop {

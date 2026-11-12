@@ -12,7 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusOrder
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
@@ -21,11 +21,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.WindowState
 import com.palestiner.pass.clipboard.StringTransferable
 import com.palestiner.pass.component.dialog.CreateDialog
 import com.palestiner.pass.model.KeyValue
-import com.palestiner.pass.showOrNo
 import com.palestiner.pass.style.columnModifier
 import com.palestiner.pass.style.fontColor
 import com.palestiner.pass.style.mainColor
@@ -35,8 +33,8 @@ import java.awt.Toolkit
 
 @Composable
 fun App(
-    windowState: WindowState,
-    mainWindowVisible: MutableState<Boolean>
+    mainWindowVisible: MutableState<Boolean>,
+    onHideWindow: () -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
     var text by remember { mutableStateOf("") }
@@ -102,10 +100,11 @@ fun App(
                         TextButton(
                             onClick = {
                                 copyClipboard(it.value)
-                                showOrNo(windowState, mainWindowVisible)
+                                text = ""
+                                onHideWindow()
                             },
                             modifier = Modifier.fillMaxWidth()
-                                .focusOrder {
+                                .focusProperties {
                                     if (index == filteredPairs.size - 1) {
                                         next = mainInputFocusRequester
                                     }
